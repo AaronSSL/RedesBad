@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedesBAD - Conversor IP y Generador de Subredes</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo" onclick="showHome()">
+                <h1>REDESBAD</h1>
+            </div>
+        </header>
+
+        <main>
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <p>¡Bienvenido a <strong>RedesBAD</strong>, tu convertidor online rápido y sencillo de direcciones IPv4 a IPv6 (y viceversa) — sin complicaciones, sin registros, solo magia IP! 🚀</p>
+                </div>
+            </div>
+
+            <div class="buttons-section">
+                <button class="main-button" onclick="showConverter()">
+                    <div class="button-icon">🔄</div>
+                    <div class="button-text">
+                        INGRESAR A<br>CONVERSOR IPv4<br>Y IPv6
+                    </div>
+                </button>
+                <button class="main-button" onclick="showSubnetGenerator()">
+                    <div class="button-icon">🌐</div>
+                    <div class="button-text">
+                        INGRESAR A<br>GENERADOR DE<br>SUBREDES
+                    </div>
+                </button>
+            </div>
+        </main>
+
+        <!-- Conversor IPv4/IPv6 -->
+        <div id="converter-section" class="tool-section" style="display: none;">
+            <div class="converter-header">
+                <div class="converter-box">
+                    <span class="box-icon">📱</span>
+                    Convertidor de IPv4
+                </div>
+                <div class="arrows">
+                    <div class="arrow-right">⟷</div>
+                </div>
+                <div class="converter-box">
+                    <span class="box-icon">🌍</span>
+                    Convertidor de IPv6
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <label>Ingresar dirección IP:</label>
+                <input type="text" id="ip-input" placeholder="Ingrese una dirección IP (ej: 192.168.1.1 o 2001:db8::1)">
+                <div class="button-group">
+                    <button class="primary-btn" onclick="convertIP()">
+                        <span class="btn-icon">⚡</span>
+                        Convertir
+                    </button>
+                    <button id="use-ip-btn" class="secondary-btn" onclick="useIPForSubnets()" style="display: none;">
+                        <span class="btn-icon">🔗</span>
+                        Usar esta IP para generar subredes
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <div id="conversion-result"></div>
+            </div>
+        </div>
+
+        <!-- Generador de Subredes -->
+        <div id="subnet-section" class="tool-section" style="display: none;">
+            <div class="subnet-header">
+                <h2>
+                    <span class="header-icon">🌐</span>
+                    GENERADOR DE SUBREDES
+                </h2>
+            </div>
+
+            <div class="subnet-layout">
+                <div class="subnet-form">
+                    <div class="subnet-inputs">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>
+                                    <span class="label-icon">🏠</span>
+                                    Ingrese IP red:
+                                </label>
+                                <input type="text" id="network-ip" placeholder="192.168.1.0">
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <span class="label-icon">🎭</span>
+                                    Ingrese máscara:
+                                </label>
+                                <select id="subnet-mask">
+                                    <option value="">Seleccione una máscara</option>
+                                    <option value="/30">/30</option>
+                                    <option value="/29">/29</option>
+                                    <option value="/28">/28</option>
+                                    <option value="/27">/27</option>
+                                    <option value="/26">/26</option>
+                                    <option value="/25">/25</option>
+                                    <option value="/24">/24</option>
+                                    <option value="/23">/23</option>
+                                    <option value="/22">/22</option>
+                                    <option value="/21">/21</option>
+                                    <option value="/20">/20</option>
+                                    <option value="/19">/19</option>
+                                    <option value="/18">/18</option>
+                                    <option value="/17">/17</option>
+                                    <option value="/16">/16</option>
+                                    <option value="/15">/15</option>
+                                    <option value="/14">/14</option>
+                                    <option value="/13">/13</option>
+                                    <option value="/12">/12</option>
+                                    <option value="/11">/11</option>
+                                    <option value="/10">/10</option>
+                                    <option value="/9">/9</option>
+                                    <option value="/8">/8</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>
+                                    <span class="label-icon">📊</span>
+                                    Cantidad de subredes:
+                                </label>
+                                <input type="number" id="subnet-count" placeholder="4">
+                            </div>
+                            <div class="input-group">
+                                <label>
+                                    <span class="label-icon">👥</span>
+                                    Cantidad de hosts:
+                                </label>
+                                <input type="number" id="host-count" placeholder="30">
+                            </div>
+                        </div>
+                        <div class="button-row">
+                            <button class="primary-btn" onclick="generateSubnets()">
+                                <span class="btn-icon">🚀</span>
+                                Generar Subredes
+                            </button>
+                        </div>
+                        <div id="remaining-subnets" class="remaining-info"></div>
+                    </div>
+                </div>
+
+                <div class="subnet-results">
+                    <div class="subnet-table-container">
+                        <table id="subnet-table">
+                            <thead>
+                                <tr>
+                                    <th>SubRed</th>
+                                    <th>Dirección Inicial</th>
+                                    <th>Dirección Final</th>
+                                    <th>Dirección de Router</th>
+                                    <th>Dirección Broadcast</th>
+                                    <th>Primera Dirección Host</th>
+                                    <th>Última Dirección Host</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subnet-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
