@@ -480,6 +480,7 @@ header {
     color: var(--text-secondary);
     font-size: 0.9em;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 #subnet-table tbody tr:nth-child(even) td {
@@ -489,6 +490,25 @@ header {
 #subnet-table tbody tr:hover td {
     background: rgba(0, 212, 170, 0.1);
     color: var(--text-primary);
+}
+
+/* Botones de edición */
+.edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    margin-left: 8px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.edit-btn:hover {
+    opacity: 1;
+    background: rgba(0, 212, 170, 0.2);
+    transform: scale(1.1);
 }
 
 /* Responsive Design */
@@ -548,6 +568,11 @@ header {
     #subnet-table th,
     #subnet-table td {
         padding: 10px 8px;
+    }
+    
+    .edit-btn {
+        font-size: 1em;
+        margin-left: 4px;
     }
 }
 

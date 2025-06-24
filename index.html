@@ -143,6 +143,15 @@
                                 <input type="number" id="host-count" placeholder="30">
                             </div>
                         </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>
+                                    <span class="label-icon">🔢</span>
+                                    Cantidad Direcciones Totales:
+                                </label>
+                                <input type="number" id="total-addresses" placeholder="256" readonly>
+                            </div>
+                        </div>
                         <div class="button-row">
                             <button class="primary-btn" onclick="generateSubnets()">
                                 <span class="btn-icon">🚀</span>
@@ -158,8 +167,20 @@
                         <table id="subnet-table">
                             <thead>
                                 <tr>
-                                    <th>SubRed</th>
+                                    <th>
+                                        SubRed
+                                        <button class="edit-btn" onclick="editAllSubnetNames()" title="Editar nombres">
+                                            ✏️
+                                        </button>
+                                    </th>
                                     <th>Dirección Inicial</th>
+                                    <th>
+                                        Hosts
+                                        <button class="edit-btn" onclick="editAllSubnetHosts()" title="Editar hosts">
+                                            ✏️
+                                        </button>
+                                    </th>
+                                    <th>Cantidad Direcciones</th>
                                     <th>Dirección Final</th>
                                     <th>Dirección de Router</th>
                                     <th>Dirección Broadcast</th>
