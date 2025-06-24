@@ -511,6 +511,57 @@ header {
     transform: scale(1.1);
 }
 
+/* Agregar estos estilos al archivo styles.css existente */
+
+.restrictions-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 15px 0;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.restrictions-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.restrictions-info strong {
+  color: #ffd700;
+}
+
+.input-help {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Estilos para alertas de validación */
+.validation-error {
+  border-color: #ff4757 !important;
+  box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.2) !important;
+}
+
+.validation-success {
+  border-color: #00d4aa !important;
+  box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+}
+
+/* Mejorar el select de máscaras */
+#subnet-mask option {
+  padding: 8px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Destacar las restricciones en el formulario */
+.subnet-header h2 {
+  margin-bottom: 10px;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .subnet-layout {
