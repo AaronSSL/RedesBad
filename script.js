@@ -52,25 +52,46 @@ function showHome() {
   document.getElementById("network-ip").value = ""
   document.getElementById("subnet-mask").value = ""
   document.getElementById("subnet-count").value = ""
-  document.getElementById("host-count").value = ""
   document.getElementById("total-addresses").value = ""
 
   // Limpiar variable global
   convertedIP = ""
 }
 
+// Funciones para manejar modales
+function openModal(modalId) {
+  document.getElementById(modalId).style.display = "block"
+  document.body.style.overflow = "hidden"
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = "none"
+  document.body.style.overflow = "auto"
+}
+
+// Cerrar modal al hacer clic fuera de él
+window.onclick = (event) => {
+  const modals = document.querySelectorAll(".modal")
+  modals.forEach((modal) => {
+    if (event.target === modal) {
+      modal.style.display = "none"
+      document.body.style.overflow = "auto"
+    }
+  })
+}
+
 // Función para validar IP de red con restricciones de Clase C
 function isValidNetworkIP(ip) {
   if (!isValidIPv4(ip)) return false
-  
+
   const parts = ip.split(".")
-  const firstOctet = parseInt(parts[0])
-  
+  const firstOctet = Number.parseInt(parts[0])
+
   // Verificar que esté en el rango 192.x.x.x a 223.x.x.x (Clase C)
   if (firstOctet < 192 || firstOctet > 223) {
     return false
   }
-  
+
   return true
 }
 
@@ -82,7 +103,7 @@ function useIPForSubnets() {
       alert("⚠️ La IP convertida no está en el rango permitido (192.x.x.x - 223.x.x.x) para el generador de subredes.")
       return
     }
-    
+
     showSubnetGenerator()
     document.getElementById("network-ip").value = convertedIP
     // Agregar efecto visual
@@ -102,42 +123,21 @@ function getNextPowerOfTwo(n) {
   return Math.pow(2, Math.ceil(Math.log2(n)))
 }
 
-// Función para calcular la máscara CIDR basada en la cantidad de hosts
-/*function calculateCIDRFromHosts(hostCount) {
-  // Agregar 2 para dirección de red y broadcast
-  const totalAddresses = hostCount + 2
-  // Encontrar la potencia de 2 más cercana hacia adelante
-  const powerOfTwo = getNextPowerOfTwo(totalAddresses)
-  // Calcular los bits de host necesarios
-  const hostBits = Math.log2(powerOfTwo)
-  // Calcular CIDR (32 - bits de host)
-  const cidr = 32 - Math.round(hostBits)
-  
-  // Verificar que el CIDR esté en el rango permitido (/24 a /30)
-  if (cidr < 24 || cidr > 30) {
-    // Si está fuera del rango, ajustar al más cercano
-    if (cidr < 24) return "/24"
-    if (cidr > 30) return "/30"
-  }
-  
-  return `/${cidr}`
-}*/
-
 function calculateCIDRFromHosts(hostCount) {
-  const totalNeeded = hostCount + 2; // Incluir red y broadcast
+  const totalNeeded = hostCount + 2 // Incluir red y broadcast
 
   // Ordenar las máscaras de /30 a /24 (menor a mayor capacidad)
-  const sortedMasks = ["/30", "/29", "/28", "/27", "/26", "/25", "/24"];
-  
+  const sortedMasks = ["/30", "/29", "/28", "/27", "/26", "/25", "/24"]
+
   for (const cidr of sortedMasks) {
-    const total = TOTAL_ADDRESSES_BY_MASK[cidr];
+    const total = TOTAL_ADDRESSES_BY_MASK[cidr]
     if (total >= totalNeeded) {
-      return cidr;
+      return cidr
     }
   }
 
   // Si ningún CIDR puede cubrir el total, devolver /24 por defecto
-  return "/24";
+  return "/24"
 }
 
 // Función para calcular hosts por subred dividiendo equitativamente
@@ -194,10 +194,9 @@ function calculateEqualSubnets(totalHosts, subnetCount) {
 // Función para recalcular todas las subredes dinámicamente
 function recalculateAllSubnets() {
   const networkIp = document.getElementById("network-ip").value.trim()
-  const totalHosts = parseInt(document.getElementById("host-count").value)
   const tbody = document.getElementById("subnet-tbody")
 
-  if (!networkIp || !totalHosts || tbody.rows.length === 0) return
+  if (!networkIp || tbody.rows.length === 0) return
 
   // Validar IP de red con restricciones
   if (!isValidNetworkIP(networkIp)) {
@@ -208,24 +207,28 @@ function recalculateAllSubnets() {
   // Separar la IP base en octetos
   const ipParts = networkIp.split(".")
   const baseOctets = [
-    parseInt(ipParts[0]),
-    parseInt(ipParts[1]),
-    parseInt(ipParts[2]),
-    parseInt(ipParts[3]),
+    Number.parseInt(ipParts[0]),
+    Number.parseInt(ipParts[1]),
+    Number.parseInt(ipParts[2]),
+    Number.parseInt(ipParts[3]),
   ]
 
   let currentOffset = 0
   let totalUsedHosts = 0
 
+  // Get the selected mask to calculate total hosts
+  const selectedMask = document.getElementById("subnet-mask").value
+  const totalHosts = MAX_HOSTS_BY_MASK[selectedMask] || 254
+
   // Recalcular cada subred basándose en la anterior
   for (let i = 0; i < tbody.rows.length; i++) {
     const row = tbody.rows[i]
     const hostsCell = row.cells[2] // La columna de hosts
-    const requestedHosts = parseInt(hostsCell.textContent)
+    const requestedHosts = Number.parseInt(hostsCell.textContent)
 
     // Aproximar a la potencia de 2 más cercana hacia adelante SOLO para direccionamiento
     const actualHosts = getNextPowerOfTwo(requestedHosts)
-    const totalAddresses = actualHosts //+ 2
+    const totalAddresses = actualHosts
 
     // Verificar que no exceda el total de hosts disponibles
     if (totalUsedHosts + actualHosts > totalHosts) {
@@ -235,8 +238,6 @@ function recalculateAllSubnets() {
       return
     }
 
-    // Calcular la máscara CIDR basada en los hosts reales
-    //const cidr = calculateCIDRFromHosts(actualHosts) 
     // Calcular la máscara CIDR basada en los hosts solicitados
     const cidr = calculateCIDRFromHosts(requestedHosts)
 
@@ -264,19 +265,33 @@ function recalculateAllSubnets() {
   }
 
   // Actualizar información de hosts restantes
-  updateRemainingHostsInfo(totalHosts, totalUsedHosts)
+  // Al final de la función recalculateAllSubnets, reemplaza la línea:
+  // updateRemainingHostsInfo(totalHosts, totalUsedHosts)
+
+  // Por esta nueva llamada:
+  const totalAddresses = TOTAL_ADDRESSES_BY_MASK[selectedMask] || 256
+  const requestedSubnets = document.getElementById("subnet-count").value || 1
+  updateRemainingHostsInfo(totalAddresses, totalUsedHosts, Number.parseInt(requestedSubnets))
 }
 
 // Función para actualizar información de hosts restantes
-function updateRemainingHostsInfo(totalHosts, usedHosts) {
+function updateRemainingHostsInfo(totalAddresses, usedHosts, requestedSubnets) {
   const remainingDiv = document.getElementById("remaining-subnets")
+
+  // Calcular total de hosts real: direcciones totales - (cantidad de subredes * 2)
+  const totalHosts = totalAddresses - requestedSubnets * 2
   const remainingHosts = totalHosts - usedHosts
+
+  // Calcular subredes sobrantes basándose en potencias de 2
+  const nextPowerOfTwo = Math.pow(2, Math.ceil(Math.log2(requestedSubnets)))
+  const remainingSubnets = nextPowerOfTwo - requestedSubnets
 
   remainingDiv.innerHTML = `
         <div style="text-align: center;">
             <div style="margin-bottom: 8px;">📊 <strong>Total de hosts:</strong> ${totalHosts}</div>
             <div style="margin-bottom: 8px;">✅ <strong>Hosts utilizados:</strong> ${usedHosts}</div>
-            <div style="color: ${remainingHosts >= 0 ? "#00d4aa" : "#ff4757"};">✨ <strong>Hosts restantes:</strong> ${remainingHosts}</div>
+            <div style="color: ${remainingHosts >= 0 ? "#00d4aa" : "#ff4757"}; margin-bottom: 8px;">✨ <strong>Hosts restantes:</strong> ${remainingHosts}</div>
+            <div style="color: #667eea; font-size: 0.9em;">🌐 <strong>Subredes sobrantes:</strong> ${remainingSubnets} (base 2: ${nextPowerOfTwo})</div>
         </div>
     `
 }
@@ -301,8 +316,8 @@ function editSubnetHosts(rowIndex) {
 
   const newHosts = prompt("Ingrese nueva cantidad de hosts para esta subred:", currentHosts)
 
-  if (newHosts && !isNaN(newHosts) && parseInt(newHosts) > 0) {
-    const requestedHosts = parseInt(newHosts)
+  if (newHosts && !isNaN(newHosts) && Number.parseInt(newHosts) > 0) {
+    const requestedHosts = Number.parseInt(newHosts)
 
     // Verificar límites según las máscaras permitidas
     if (requestedHosts > 254) {
@@ -330,7 +345,7 @@ function editSubnetHosts(rowIndex) {
     const newCIDR = calculateCIDRFromHosts(actualHosts)
 
     // Validar que la máscara esté en el rango permitido
-    const cidrNumber = parseInt(newCIDR.substring(1))
+    const cidrNumber = Number.parseInt(newCIDR.substring(1))
     if (cidrNumber < 24 || cidrNumber > 30) {
       alert(`❌ Error: La máscara calculada ${newCIDR} está fuera del rango permitido (/24 a /30)`)
       return
@@ -351,83 +366,140 @@ function editSubnetHosts(rowIndex) {
   }
 }
 
-// Agregar funciones para editar desde la cabecera
+// Función para editar todos los nombres de subredes con modal
 function editAllSubnetNames() {
   const tbody = document.getElementById("subnet-tbody")
+  const container = document.getElementById("names-edit-container")
+
+  if (tbody.rows.length === 0) {
+    alert("⚠️ Primero debe generar las subredes.")
+    return
+  }
+
+  container.innerHTML = ""
+
+  // Crear inputs para cada subred
   for (let i = 0; i < tbody.rows.length; i++) {
     const row = tbody.rows[i]
-    const nameCell = row.cells[0]
-    const currentName = nameCell.textContent.trim()
+    const currentName = row.cells[0].textContent.trim()
 
-    const newName = prompt(`Editar nombre de subred ${i + 1}:`, currentName)
-    if (newName && newName.trim() !== "") {
-      nameCell.innerHTML = `<strong>${newName.trim()}</strong>`
-    }
+    const editItem = document.createElement("div")
+    editItem.className = "edit-item"
+    editItem.innerHTML = `
+      <div class="edit-item-label">
+        <span>🌐</span>
+        Subred ${i + 1}:
+      </div>
+      <input type="text" class="edit-item-input" data-row="${i}" value="${currentName}" placeholder="Nombre de la subred">
+    `
+    container.appendChild(editItem)
   }
+
+  openModal("edit-names-modal")
 }
 
-// Función para editar hosts desde la cabecera
+// Función para guardar los nombres de subredes
+function saveSubnetNames() {
+  const inputs = document.querySelectorAll("#names-edit-container .edit-item-input")
+  const tbody = document.getElementById("subnet-tbody")
+
+  inputs.forEach((input) => {
+    const rowIndex = Number.parseInt(input.dataset.row)
+    const newName = input.value.trim()
+
+    if (newName && rowIndex < tbody.rows.length) {
+      const nameCell = tbody.rows[rowIndex].cells[0]
+      nameCell.innerHTML = `<strong>${newName}</strong>`
+    }
+  })
+
+  closeModal("edit-names-modal")
+}
+
+// Función para editar todos los hosts de subredes con modal
 function editAllSubnetHosts() {
   const tbody = document.getElementById("subnet-tbody")
-  const totalHosts = parseInt(document.getElementById("host-count").value)
-  let totalUsedHosts = 0
+  const container = document.getElementById("hosts-edit-container")
 
-  for (let i = 0; i < tbody.rows.length; i++) {
-    const row = tbody.rows[i]
-    const hostsCell = row.cells[2]
-    const currentHosts = hostsCell.textContent
-
-    const newHosts = prompt(`Ingrese cantidad de hosts para subred ${i + 1}:`, currentHosts)
-
-    if (newHosts && !isNaN(newHosts) && parseInt(newHosts) > 0) {
-      const requestedHosts = parseInt(newHosts)
-
-      // Verificar límites según las máscaras permitidas
-      if (requestedHosts > 254) {
-        alert(`❌ Error: El máximo de hosts permitido es 254 (máscara /24) para la subred ${i + 1}`)
-        continue
-      }
-
-      if (requestedHosts < 2) {
-        alert(`❌ Error: El mínimo de hosts permitido es 2 (máscara /30) para la subred ${i + 1}`)
-        continue
-      }
-
-      const actualHosts = getNextPowerOfTwo(requestedHosts)
-
-      // Verificar que no exceda el total
-      if (totalUsedHosts + actualHosts > totalHosts) {
-        alert(
-          `❌ Error: La subred ${String.fromCharCode(65 + i)} requiere ${actualHosts} hosts, pero solo quedan ${totalHosts - totalUsedHosts} hosts disponibles.`,
-        )
-        continue
-      }
-
-      // Calcular la nueva máscara CIDR basada en los hosts reales
-      const newCIDR = calculateCIDRFromHosts(actualHosts)
-
-      // Validar que la máscara esté en el rango permitido
-      const cidrNumber = parseInt(newCIDR.substring(1))
-      if (cidrNumber < 24 || cidrNumber > 30) {
-        alert(`❌ Error: La máscara calculada ${newCIDR} para la subred ${i + 1} está fuera del rango permitido (/24 a /30)`)
-        continue
-      }
-
-      // Validar hosts máximos por máscara
-      const maxHosts = MAX_HOSTS_BY_MASK[newCIDR]
-      if (maxHosts && actualHosts > maxHosts) {
-        alert(`❌ Error: La cantidad máxima de hosts para la máscara ${newCIDR} es ${maxHosts.toLocaleString()}.`)
-        continue
-      }
-
-      // Actualizar la cantidad de hosts en la celda (mantener los hosts solicitados)
-      hostsCell.textContent = requestedHosts
-      totalUsedHosts += actualHosts
-    }
+  if (tbody.rows.length === 0) {
+    alert("⚠️ Primero debe generar las subredes.")
+    return
   }
 
-  // Recalcular todas las subredes dinámicamente
+  container.innerHTML = ""
+
+  // Crear inputs para cada subred
+  for (let i = 0; i < tbody.rows.length; i++) {
+    const row = tbody.rows[i]
+    const currentHosts = row.cells[2].textContent.trim()
+    const subnetName = row.cells[0].textContent.trim()
+
+    const editItem = document.createElement("div")
+    editItem.className = "edit-item"
+    editItem.innerHTML = `
+      <div class="edit-item-label">
+        <span>👥</span>
+        ${subnetName}:
+      </div>
+      <input type="number" class="edit-item-input" data-row="${i}" value="${currentHosts}" 
+             placeholder="Cantidad de hosts" min="2" max="254">
+    `
+    container.appendChild(editItem)
+  }
+
+  openModal("edit-hosts-modal")
+}
+
+// Función para guardar los hosts de subredes
+function saveSubnetHosts() {
+  const inputs = document.querySelectorAll("#hosts-edit-container .edit-item-input")
+  const tbody = document.getElementById("subnet-tbody")
+  const selectedMask = document.getElementById("subnet-mask").value
+  const totalHosts = MAX_HOSTS_BY_MASK[selectedMask] || 254
+  let totalUsedHosts = 0
+  let hasErrors = false
+
+  // Validar todos los inputs primero
+  const validatedInputs = []
+  inputs.forEach((input) => {
+    const rowIndex = Number.parseInt(input.dataset.row)
+    const requestedHosts = Number.parseInt(input.value)
+
+    if (!requestedHosts || requestedHosts < 2 || requestedHosts > 254) {
+      alert(`❌ Error: La cantidad de hosts para la subred ${rowIndex + 1} debe estar entre 2 y 254.`)
+      hasErrors = true
+      return
+    }
+
+    const actualHosts = getNextPowerOfTwo(requestedHosts)
+    totalUsedHosts += actualHosts
+
+    validatedInputs.push({
+      rowIndex,
+      requestedHosts,
+      actualHosts,
+    })
+  })
+
+  if (hasErrors) return
+
+  // Verificar que no exceda el total
+  if (totalUsedHosts > totalHosts) {
+    alert(`❌ Error: El total de hosts utilizados (${totalUsedHosts}) excede el máximo disponible (${totalHosts}).`)
+    return
+  }
+
+  // Aplicar los cambios
+  validatedInputs.forEach(({ rowIndex, requestedHosts }) => {
+    if (rowIndex < tbody.rows.length) {
+      const hostsCell = tbody.rows[rowIndex].cells[2]
+      hostsCell.textContent = requestedHosts
+    }
+  })
+
+  // Recalcular todas las subredes
   recalculateAllSubnets()
+  closeModal("edit-hosts-modal")
 }
 
 // Funciones del conversor IP
@@ -437,7 +509,7 @@ function isValidIPv4(ip) {
 
   const parts = ip.split(".")
   return parts.every((part) => {
-    const num = parseInt(part)
+    const num = Number.parseInt(part)
     return num >= 0 && num <= 255
   })
 }
@@ -449,8 +521,8 @@ function isValidIPv6(ip) {
 
 function ipv4ToIPv6(ipv4) {
   const parts = ipv4.split(".")
-  const hex1 = (parseInt(parts[0]) * 256 + parseInt(parts[1])).toString(16).padStart(4, "0")
-  const hex2 = (parseInt(parts[2]) * 256 + parseInt(parts[3])).toString(16).padStart(4, "0")
+  const hex1 = (Number.parseInt(parts[0]) * 256 + Number.parseInt(parts[1])).toString(16).padStart(4, "0")
+  const hex2 = (Number.parseInt(parts[2]) * 256 + Number.parseInt(parts[3])).toString(16).padStart(4, "0")
   return `::ffff:${hex1}:${hex2}`
 }
 
@@ -460,8 +532,8 @@ function ipv6ToIPv4(ipv6) {
     const hex = ipv6.split("::ffff:")[1]
     const parts = hex.split(":")
     if (parts.length === 2) {
-      const part1 = parseInt(parts[0], 16)
-      const part2 = parseInt(parts[1], 16)
+      const part1 = Number.parseInt(parts[0], 16)
+      const part2 = Number.parseInt(parts[1], 16)
       const octet1 = Math.floor(part1 / 256)
       const octet2 = part1 % 256
       const octet3 = Math.floor(part2 / 256)
@@ -489,17 +561,17 @@ function convertIP() {
   if (isValidIPv4(input)) {
     const ipv6 = ipv4ToIPv6(input)
     convertedIP = input // Guardar la IP original para usar en subredes
-    
+
     // Verificar si la IP está en el rango permitido para mostrar el botón
     const showButton = isValidNetworkIP(input)
-    
+
     result = `
             <div class="success">
                 <h3>✅ Conversión IPv4 → IPv6</h3>
                 <p><strong>📱 IPv4 Original:</strong> ${input}</p>
                 <p><strong>🌍 IPv6 Equivalente:</strong> ${ipv6}</p>
                 <p><strong>🔍 IPv6 Expandido:</strong> 0000:0000:0000:0000:0000:ffff:${ipv6.split("::ffff:")[1]}</p>
-                ${!showButton ? '<p><strong>⚠️ Nota:</strong> Esta IP no está en el rango 192.x.x.x - 223.x.x.x requerido para el generador de subredes.</p>' : ''}
+                ${!showButton ? "<p><strong>⚠️ Nota:</strong> Esta IP no está en el rango 192.x.x.x - 223.x.x.x requerido para el generador de subredes.</p>" : ""}
             </div>
         `
     useIpBtn.style.display = showButton ? "flex" : "none"
@@ -507,16 +579,16 @@ function convertIP() {
     const ipv4 = ipv6ToIPv4(input)
     if (ipv4) {
       convertedIP = ipv4 // Guardar la IP convertida para usar en subredes
-      
+
       // Verificar si la IP convertida está en el rango permitido
       const showButton = isValidNetworkIP(ipv4)
-      
+
       result = `
                 <div class="success">
                     <h3>✅ Conversión IPv6 → IPv4</h3>
                     <p><strong>🌍 IPv6 Original:</strong> ${input}</p>
                     <p><strong>📱 IPv4 Equivalente:</strong> ${ipv4}</p>
-                    ${!showButton ? '<p><strong>⚠️ Nota:</strong> La IP convertida no está en el rango 192.x.x.x - 223.x.x.x requerido para el generador de subredes.</p>' : ''}
+                    ${!showButton ? "<p><strong>⚠️ Nota:</strong> La IP convertida no está en el rango 192.x.x.x - 223.x.x.x requerido para el generador de subredes.</p>" : ""}
                 </div>
             `
       useIpBtn.style.display = showButton ? "flex" : "none"
@@ -545,8 +617,7 @@ function convertIP() {
 function generateSubnets() {
   const networkIp = document.getElementById("network-ip").value.trim()
   const subnetMask = document.getElementById("subnet-mask").value
-  const subnetCount = parseInt(document.getElementById("subnet-count").value)
-  const hostCount = parseInt(document.getElementById("host-count").value)
+  const subnetCount = Number.parseInt(document.getElementById("subnet-count").value)
   const tbody = document.getElementById("subnet-tbody")
   const remainingDiv = document.getElementById("remaining-subnets")
 
@@ -554,7 +625,7 @@ function generateSubnets() {
   remainingDiv.innerHTML = ""
 
   // Validaciones básicas
-  if (!networkIp || !subnetMask || !subnetCount || !hostCount) {
+  if (!networkIp || !subnetMask || !subnetCount) {
     alert("⚠️ Por favor, complete todos los campos.")
     return
   }
@@ -577,10 +648,8 @@ function generateSubnets() {
     return
   }
 
-  if (hostCount <= 0 || hostCount > 254) {
-    alert("⚠️ El número de hosts debe estar entre 1 y 254 (máximo para Clase C).")
-    return
-  }
+  // Calculate host count automatically based on selected mask
+  const hostCount = MAX_HOSTS_BY_MASK[subnetMask] || 254
 
   // Validación de hosts máximos por máscara
   const maxHosts = MAX_HOSTS_BY_MASK[subnetMask]
@@ -610,10 +679,10 @@ Direcciones mínimas necesarias: ${minAddressesNeeded}`)
   // Separar la IP base en octetos
   const ipParts = networkIp.split(".")
   const baseOctets = [
-    parseInt(ipParts[0]),
-    parseInt(ipParts[1]),
-    parseInt(ipParts[2]),
-    parseInt(ipParts[3]),
+    Number.parseInt(ipParts[0]),
+    Number.parseInt(ipParts[1]),
+    Number.parseInt(ipParts[2]),
+    Number.parseInt(ipParts[3]),
   ]
 
   let currentOffset = 0
@@ -651,7 +720,12 @@ Direcciones mínimas necesarias: ${minAddressesNeeded}`)
     }
 
     // Mostrar información de hosts restantes
-    updateRemainingHostsInfo(hostCount, totalUsedHosts)
+    // Reemplaza la línea:
+    // updateRemainingHostsInfo(hostCount, totalUsedHosts)
+
+    // Por esta nueva llamada:
+    const totalAddresses = TOTAL_ADDRESSES_BY_MASK[subnetMask] || 256
+    updateRemainingHostsInfo(totalAddresses, totalUsedHosts, subnetCount)
   } catch (error) {
     alert("❌ Error al generar las subredes. Verifique los datos ingresados.")
     console.error(error)
@@ -668,7 +742,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   // Permitir generación con Enter en los campos de subnet (excepto el select)
-  const subnetInputs = ["network-ip", "subnet-count", "host-count"]
+  const subnetInputs = ["network-ip", "subnet-count"]
   subnetInputs.forEach((id) => {
     document.getElementById(id).addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
@@ -689,24 +763,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Autocompletar hosts y direcciones totales según máscara seleccionada
   document.getElementById("subnet-mask").addEventListener("change", (e) => {
     const selectedMask = e.target.value
-    const hostCountField = document.getElementById("host-count")
     const totalAddressesField = document.getElementById("total-addresses")
-
-    if (selectedMask && MAX_HOSTS_BY_MASK[selectedMask]) {
-      hostCountField.value = MAX_HOSTS_BY_MASK[selectedMask]
-    }
 
     if (selectedMask && TOTAL_ADDRESSES_BY_MASK[selectedMask]) {
       totalAddressesField.value = TOTAL_ADDRESSES_BY_MASK[selectedMask]
-    }
-  })
-
-  // Validación para cantidad de hosts
-  document.getElementById("host-count").addEventListener("blur", (e) => {
-    const hosts = parseInt(e.target.value)
-    if (hosts && (hosts < 2 || hosts > 254)) {
-      alert("⚠️ La cantidad de hosts debe estar entre 2 y 254 (rango de Clase C)")
-      e.target.focus()
     }
   })
 })

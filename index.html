@@ -107,13 +107,13 @@
                                 </label>
                                 <select id="subnet-mask">
                                     <option value="">Seleccione una máscara</option>
-                                    <option value="/30">/30 (2 hosts)</option>
-                                    <option value="/29">/29 (6 hosts)</option>
-                                    <option value="/28">/28 (14 hosts)</option>
-                                    <option value="/27">/27 (30 hosts)</option>
-                                    <option value="/26">/26 (62 hosts)</option>
-                                    <option value="/25">/25 (126 hosts)</option>
-                                    <option value="/24">/24 (254 hosts)</option>
+                                    <option value="/30">/30</option>
+                                    <option value="/29">/29</option>
+                                    <option value="/28">/28</option>
+                                    <option value="/27">/27</option>
+                                    <option value="/26">/26</option>
+                                    <option value="/25">/25</option>
+                                    <option value="/24">/24</option>
                                 </select>
                             </div>
                         </div>
@@ -125,15 +125,6 @@
                                 </label>
                                 <input type="number" id="subnet-count" placeholder="4" min="1" max="26">
                             </div>
-                            <div class="input-group">
-                                <label>
-                                    <span class="label-icon">👥</span>
-                                    Cantidad de hosts:
-                                </label>
-                                <input type="number" id="host-count" placeholder="30" min="1" max="254">
-                            </div>
-                        </div>
-                        <div class="input-row">
                             <div class="input-group">
                                 <label>
                                     <span class="label-icon">🔢</span>
@@ -183,6 +174,46 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar nombres de subredes -->
+    <div id="edit-names-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Nombres de Subredes</h3>
+                <button class="close-btn" onclick="closeModal('edit-names-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="names-edit-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" onclick="closeModal('edit-names-modal')">Cancelar</button>
+                <button class="primary-btn" onclick="saveSubnetNames()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar hosts de subredes -->
+    <div id="edit-hosts-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👥 Editar Hosts de Subredes</h3>
+                <button class="close-btn" onclick="closeModal('edit-hosts-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info">
+                    <p><strong>📋 Restricciones:</strong></p>
+                    <p>• Mínimo: 2 hosts por subred</p>
+                    <p>• Máximo: 254 hosts por subred</p>
+                    <p>• Los valores se aproximarán a la potencia de 2 más cercana</p>
+                </div>
+                <div id="hosts-edit-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" onclick="closeModal('edit-hosts-modal')">Cancelar</button>
+                <button class="primary-btn" onclick="saveSubnetHosts()">Guardar Cambios</button>
             </div>
         </div>
     </div>
